@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://www.gstatic.com/firebasejs/4.13.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.13.0/firebase-messaging.js"></script>
+    <script>
+        firebase.initializeApp({
+            'messagingSenderId': '365277322780'
+        })
+        const messaging = firebase.messaging();
+        function initFirebaseMessagingRegistration() {
+            messaging
+                .requestPermission()
+                .then(function () {
+                    messageElement.innerHTML = "Got notification permission";
+                    console.log("Got notification permission");
+                    return messaging.getToken();
+                })
+                .then(async function (token) {
+                    // print the token on the HTML page
+                    tokenElement.innerHTML = "Token is " + token;
+                    const topic = 'test';
+                    const apiKey = 'AAAAVQw5nhw:APA91bFF8_BauOnAgJSAVLIVUUTN7mmUwnHhFpFN483VvNb0-ISV2bGaoX7aR5bW9Lcukcwsa6Cgc1qqqmXE-hENqu4ale4qNMtBpZ-USdLl0CH5AZu2VwPKBhQflXnzpZ16mNSlSalM'
+                    const response = await fetch(`https://iid.googleapis.com/iid/v1/${token}/rel/topics/${topic}`, {
+                            method: 'POST',
+                            headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'key='+apiKey
+                            }
+                     });
+                    console.log("TCL: initFirebaseMessagingRegistration -> response", response)
+                })
+                .catch(function (err) {
+                    errorElement.innerHTML = "Error: " + err;
+                    console.log("Didn't get notification permission", err);
+                });
+        }
+        messaging.onMessage(function (payload) {
+            console.log("TCL: payload", payload)
+            // console.log("Message received. ", JSON.stringify(payload));
+            notificationElement.innerHTML = notificationElement.innerHTML + " " + payload.data.notification;
+        });
+        messaging.onTokenRefresh(function () {
+            messaging.getToken()
+                .then(function (refreshedToken) {
+                    console.log('Token refreshed.');
+                    tokenElement.innerHTML = "Token is " + refreshedToken;
+                }).catch(function (err) {
+                    errorElement.innerHTML = "Error: " + err;
+                    console.log('Unable to retrieve refreshed token ', err);
+                });
+        });
+    </script>
+</head>
+
+<body>
+    <h1>This is a test page</h1>
+    <div id="token" style="color:lightblue"></div>
+    <div id="message" style="color:lightblue"></div>
+    <div id="notification" style="color:green"></div>
+    <div id="error" style="color:red"></div>
+    <script>
+        messageElement = document.getElementById("message")
+        tokenElement = document.getElementById("token")
+        notificationElement = document.getElementById("notification")
+        errorElement = document.getElementById("error")
+    </script>
+    <button onclick="initFirebaseMessagingRegistration()">Enable Firebase Messaging</button>
+
+</html>
